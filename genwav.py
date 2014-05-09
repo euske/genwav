@@ -10,6 +10,7 @@ import sys
 import wave
 import struct
 import array
+import random
 from math import sin, cos, pi
 
 
@@ -112,31 +113,30 @@ class WaveGenerator(object):
         return
 
     def add(self, *iters):
-        while iters:
+        while 1:
             x = 0.0
-            r = []
             for it in iters:
                 try:
                     x += it.next()
                 except StopIteration:
-                    r.append(it)
+                    return
             yield x
-            for it in r:
-                iters.remove(it)
         return
 
     def mult(self, *iters):
-        while iters:
+        while 1:
             x = 1.0
-            r = []
             for it in iters:
                 try:
                     x *= it.next()
                 except StopIteration:
-                    r.append(it)
+                    return
             yield x
-            for it in r:
-                iters.remove(it)
+        return
+
+    def amp(self, volume, it):
+        for x in it:
+            yield volume*x
         return
 
     def concat(self, *iters):
@@ -145,14 +145,9 @@ class WaveGenerator(object):
                 yield x
         return
 
-    def avg(self, *iters):
+    def mix(self, *iters):
         r = 1.0/len(iters)
         return self.amp(r, self.add(*iters))
-
-    def amp(self, volume, it):
-        for x in it:
-            yield volume*x
-        return
 
     def cut(self, duration, it):
         n = int(self.framerate * duration)
@@ -163,22 +158,11 @@ class WaveGenerator(object):
                 break
         return
 
-    def attack(self, attack, decay, it):
-        na = int(self.framerate * attack)
-        ra = 1.0/float(na)
-        for i in xrange(na):
-            try:
-                yield i*ra*it.next()
-            except StopIteration:
-                return
-        nd = int(self.framerate * decay)
-        rd = 1.0/float(nd)
-        for i in xrange(nd):
-            try:
-                yield (1.0-i*rd)*it.next()
-            except StopIteration:
-                return
-        yield 0.0
+    def env(self, duration, a0, a1):
+        n = int(self.framerate * duration)
+        r = (a1-a0)/float(n)
+        for i in xrange(n):
+            yield a0+(i+1)*r
         return
 
     def sine(self, freq):
@@ -209,48 +193,68 @@ class WaveGenerator(object):
                 yield i*r-1.0
         return
 
+    def noise(self, freq):
+        freq = self.TONE2FREQ.get(freq, freq)
+        w = int(self.framerate/freq/2)
+        while 1:
+            x = random.random()*2.0-1.0
+            for i in xrange(w):
+                yield x
+        return
+        
+
 # gen_sine_tone
 def gen_sine_tone(framerate, tones, volume=0.5, attack=0.01, decay=0.7):
     print 'gen_sine_tone', tones
     gen = WaveGenerator(framerate)
-    wav = gen.avg(*[ gen.sine(k) for k in tones ])
-    wav = gen.amp(volume, wav)
-    wav = gen.attack(attack, decay, wav)
-    return wav
+    wav = gen.mix(*[ gen.sine(k) for k in tones ])
+    env = gen.concat(gen.env(attack, 0.0, volume),
+                     gen.env(decay, volume, 0.0))
+    return gen.mult(wav, env)
 
 # gen_square_tone
 def gen_square_tone(framerate, tones, volume=0.5, attack=0.01, decay=0.7):
     print 'gen_square_tone', tones
     gen = WaveGenerator(framerate)
-    wav = gen.avg(*[ gen.square(k) for k in tones ])
-    wav = gen.amp(volume, wav)
-    wav = gen.attack(attack, decay, wav)
-    return wav
+    wav = gen.mix(*[ gen.square(k) for k in tones ])
+    env = gen.concat(gen.env(attack, 0.0, volume),
+                     gen.env(decay, volume, 0.0))
+    return gen.mult(wav, env)
 
 # gen_triangle_tone
 def gen_triangle_tone(framerate, tones, volume=0.5, attack=0.01, decay=0.7):
     print 'gen_triangle_tone', tones
     gen = WaveGenerator(framerate)
-    wav = gen.avg(*[ gen.triangle(k) for k in tones ])
-    wav = gen.amp(volume, wav)
-    wav = gen.attack(attack, decay, wav)
-    return wav
+    wav = gen.mix(*[ gen.triangle(k) for k in tones ])
+    env = gen.concat(gen.env(attack, 0.0, volume),
+                     gen.env(decay, volume, 0.0))
+    return gen.mult(wav, env)
+
+# gen_noise_tone
+def gen_noise_tone(framerate, tones, volume=0.5, attack=0.01, decay=0.7):
+    print 'gen_noise_tone', tones
+    gen = WaveGenerator(framerate)
+    wav = gen.mix(*[ gen.noise(k) for k in tones ])
+    env = gen.concat(gen.env(attack, 0.0, volume),
+                     gen.env(decay, volume, 0.0))
+    return gen.mult(wav, env)
 
 # main
 def main(argv):
     import getopt
     def usage():
-        print 'usage: %s {-N|-Q|-T} out.wav [tone ...]' % argv[0]
+        print 'usage: %s {-S|-Q|-T|-N} out.wav [tone ...]' % argv[0]
         return 100
     try:
-        (opts, args) = getopt.getopt(argv[1:], 'NQT')
+        (opts, args) = getopt.getopt(argv[1:], 'SQTN')
     except getopt.GetoptError:
         return usage()
     gen = gen_sine_tone
     for (k, v) in opts:
-        if k == '-N': gen = gen_sine_tone
+        if k == '-S': gen = gen_sine_tone
         elif k == '-Q': gen = gen_square_tone
         elif k == '-T': gen = gen_triangle_tone
+        elif k == '-N': gen = gen_noise_tone
     if not args: return usage()
     path = args.pop(0)
     fp = open(path, 'wb')
