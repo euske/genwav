@@ -3,7 +3,7 @@
 # Generates a tone wave.
 #
 # usage:
-#   $ python genwav.py {-N|-T|-Q} out.wav [tone ...]
+#   $ python genwav.py {-N|-T|-Q} [-o out.wav] [tone ...]
 #
 
 import sys
@@ -11,6 +11,7 @@ import wave
 import struct
 import array
 import random
+import os.path
 from math import sin, cos, pi
 
 
@@ -243,20 +244,24 @@ def gen_noise_tone(framerate, tones, volume=0.5, attack=0.01, decay=0.7):
 def main(argv):
     import getopt
     def usage():
-        print 'usage: %s {-S|-Q|-T|-N} out.wav [tone ...]' % argv[0]
+        print 'usage: %s [-f] [-o out.wav] {-S|-Q|-T|-N} [tone ...]' % argv[0]
         return 100
     try:
-        (opts, args) = getopt.getopt(argv[1:], 'SQTN')
+        (opts, args) = getopt.getopt(argv[1:], 'fo:SQTN')
     except getopt.GetoptError:
         return usage()
+    force = False
+    path = 'out.wav'
     gen = gen_sine_tone
     for (k, v) in opts:
-        if k == '-S': gen = gen_sine_tone
+        if k == '-f': force = True
+        elif k == '-o': path = v
+        elif k == '-S': gen = gen_sine_tone
         elif k == '-Q': gen = gen_square_tone
         elif k == '-T': gen = gen_triangle_tone
         elif k == '-N': gen = gen_noise_tone
     if not args: return usage()
-    path = args.pop(0)
+    if not force and os.path.exists(path): raise IOError(path)
     fp = open(path, 'wb')
     stream = WaveWriter(fp)
     wav = gen(stream.framerate, args)
