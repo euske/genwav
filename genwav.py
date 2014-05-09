@@ -83,94 +83,28 @@ class WaveWriter(object):
 class WaveGenerator(object):
 
     TONE2FREQ = {
-        'A0': 28,
-        '^A0': 29,
-        'B0': 31,
-        'C1': 33,
-        '^C1': 35,
-        'D1': 37,
-        '^D1': 39,
-        'E1': 41,
-        'F1': 44,
-        '^F1': 46,
-        'G1': 49,
-        '^G1': 52,
-        'A1': 55,
-        '^A1': 58,
-        'B1': 62,
-        'C2': 65,
-        '^C2': 69,
-        'D2': 73,
-        '^D2': 78,
-        'E2': 82,
-        'F2': 87,
-        '^F2': 93,
-        'G2': 98,
-        '^G2': 104,
-        'A2': 110,
-        '^A2': 117,
-        'B2': 123,
-        'C3': 131,
-        '^C3': 139,
-        'D3': 147,
-        '^D3': 156,
-        'E3': 165,
-        'F3': 175,
-        '^F3': 185,
-        'G3': 196,
-        '^G3': 208,
-        'A3': 220,
-        '^A3': 233,
-        'B3': 247,
-        'C4': 262,
-        '^C4': 277,
-        'D4': 294,
-        '^D4': 311,
-        'E4': 330,
-        'F4': 349,
-        '^F4': 370,
-        'G4': 392,
-        '^G4': 415,
-        'A4': 440,
-        '^A4': 466,
-        'B4': 494,
-        'C5': 523,
-        '^C5': 554,
-        'D5': 587,
-        '^D5': 622,
-        'E5': 659,
-        'F5': 698,
-        '^F5': 740,
-        'G5': 784,
-        '^G5': 831,
-        'A5': 880,
-        '^A5': 932,
-        'B5': 988,
-        'C6': 1047,
-        '^C6': 1109,
-        'D6': 1175,
-        '^D6': 1245,
-        'E6': 1319,
-        'F6': 1397,
-        '^F6': 1480,
-        'G6': 1568,
-        '^G6': 1661,
-        'A6': 1760,
-        '^A6': 1865,
-        'B6': 1976,
-        'C7': 2093,
-        '^C7': 2217,
-        'D7': 2349,
-        '^D7': 2489,
-        'E7': 2637,
-        'F7': 2794,
-        '^F7': 2960,
-        'G7': 3136,
-        '^G7': 3322,
-        'A7': 3520,
-        '^A7': 3729,
-        'B7': 3951,
-        'C8': 4186,
+        'A0': 28, '^A0': 29, 'B0': 31, 'C1': 33,
+        '^C1': 35, 'D1': 37, '^D1': 39, 'E1': 41,
+        'F1': 44, '^F1': 46, 'G1': 49, '^G1': 52,
+        'A1': 55, '^A1': 58, 'B1': 62, 'C2': 65,
+        '^C2': 69, 'D2': 73, '^D2': 78, 'E2': 82,
+        'F2': 87, '^F2': 93, 'G2': 98, '^G2': 104,
+        'A2': 110, '^A2': 117, 'B2': 123, 'C3': 131,
+        '^C3': 139, 'D3': 147, '^D3': 156, 'E3': 165,
+        'F3': 175, '^F3': 185, 'G3': 196, '^G3': 208,
+        'A3': 220, '^A3': 233, 'B3': 247, 'C4': 262,
+        '^C4': 277, 'D4': 294, '^D4': 311, 'E4': 330,
+        'F4': 349, '^F4': 370, 'G4': 392, '^G4': 415,
+        'A4': 440, '^A4': 466, 'B4': 494, 'C5': 523,
+        '^C5': 554, 'D5': 587, '^D5': 622, 'E5': 659,
+        'F5': 698, '^F5': 740, 'G5': 784, '^G5': 831,
+        'A5': 880, '^A5': 932, 'B5': 988, 'C6': 1047,
+        '^C6': 1109, 'D6': 1175, '^D6': 1245, 'E6': 1319,
+        'F6': 1397, '^F6': 1480, 'G6': 1568, '^G6': 1661,
+        'A6': 1760, '^A6': 1865, 'B6': 1976, 'C7': 2093,
+        '^C7': 2217, 'D7': 2349, '^D7': 2489, 'E7': 2637,
+        'F7': 2794, '^F7': 2960, 'G7': 3136, '^G7': 3322,
+        'A7': 3520, '^A7': 3729, 'B7': 3951, 'C8': 4186,
     }
 
     def __init__(self, framerate):
@@ -276,46 +210,31 @@ class WaveGenerator(object):
         return
 
 # gen_sine_tone
-def gen_sine_tone(path, tones, volume=0.5, attack=0.01, decay=0.7):
-    print 'gen_sine_tone', path, tones
-    fp = open(path, 'wb')
-    stream = WaveWriter(fp)
-    gen = WaveGenerator(stream.framerate)
+def gen_sine_tone(framerate, tones, volume=0.5, attack=0.01, decay=0.7):
+    print 'gen_sine_tone', tones
+    gen = WaveGenerator(framerate)
     wav = gen.avg(*[ gen.sine(k) for k in tones ])
     wav = gen.amp(volume, wav)
     wav = gen.attack(attack, decay, wav)
-    stream.write(wav)
-    stream.close()
-    fp.close()
-    return
+    return wav
 
 # gen_square_tone
-def gen_square_tone(path, tones, volume=0.5, attack=0.01, decay=0.7):
-    print 'gen_square_tone', path, tones
-    fp = open(path, 'wb')
-    stream = WaveWriter(fp)
-    gen = WaveGenerator(stream.framerate)
+def gen_square_tone(framerate, tones, volume=0.5, attack=0.01, decay=0.7):
+    print 'gen_square_tone', tones
+    gen = WaveGenerator(framerate)
     wav = gen.avg(*[ gen.square(k) for k in tones ])
     wav = gen.amp(volume, wav)
     wav = gen.attack(attack, decay, wav)
-    stream.write(wav)
-    stream.close()
-    fp.close()
-    return
+    return wav
 
 # gen_triangle_tone
-def gen_triangle_tone(path, tones, volume=0.5, attack=0.01, decay=0.7):
-    print 'gen_triangle_tone', path, tones
-    fp = open(path, 'wb')
-    stream = WaveWriter(fp)
-    gen = WaveGenerator(stream.framerate)
+def gen_triangle_tone(framerate, tones, volume=0.5, attack=0.01, decay=0.7):
+    print 'gen_triangle_tone', tones
+    gen = WaveGenerator(framerate)
     wav = gen.avg(*[ gen.triangle(k) for k in tones ])
     wav = gen.amp(volume, wav)
     wav = gen.attack(attack, decay, wav)
-    stream.write(wav)
-    stream.close()
-    fp.close()
-    return
+    return wav
 
 # main
 def main(argv):
@@ -327,13 +246,19 @@ def main(argv):
         (opts, args) = getopt.getopt(argv[1:], 'NQT')
     except getopt.GetoptError:
         return usage()
-    func = gen_sine_tone
+    gen = gen_sine_tone
     for (k, v) in opts:
-        if k == '-N': func = gen_sine_tone
-        elif k == '-Q': func = gen_square_tone
-        elif k == '-T': func = gen_triangle_tone
+        if k == '-N': gen = gen_sine_tone
+        elif k == '-Q': gen = gen_square_tone
+        elif k == '-T': gen = gen_triangle_tone
+    if not args: return usage()
     path = args.pop(0)
-    func(path, args)
+    fp = open(path, 'wb')
+    stream = WaveWriter(fp)
+    wav = gen(stream.framerate, args)
+    stream.write(wav)
+    stream.close()
+    fp.close()
     return 0
 
 if __name__ == '__main__': sys.exit(main(sys.argv))
